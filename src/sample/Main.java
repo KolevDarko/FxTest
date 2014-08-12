@@ -83,8 +83,16 @@ public class Main extends Application {
         BorderPane border = new BorderPane();
 
         HBox hbox = addHBox();
-        border.setTop(hbox);
-        border.setLeft(addVBox());
+        MenuBar menuBar = new MenuBar();
+        Menu menuDiagram = new Menu("Diagram");
+        MenuItem useCase = new MenuItem("Use Case");
+        MenuItem activity = new MenuItem("Activity");
+        MenuItem sequence = new MenuItem("Sequence");
+        menuDiagram.getItems().addAll(useCase, activity, sequence);
+
+        menuBar.getMenus().add(menuDiagram);
+
+        border.setTop(menuBar);
 
 // Add a stack to the HBox in the top region
         addStackPane(hbox);
