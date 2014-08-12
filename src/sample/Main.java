@@ -7,10 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.HPos;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.geometry.VPos;
+import javafx.geometry.*;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -35,9 +32,17 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import net.sourceforge.plantuml.SourceStringReader;
+import java.awt.image.BufferedImage;
 
+import javax.imageio.ImageIO;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 
 
 /**
@@ -48,13 +53,20 @@ import java.util.List;
 
 
 public class Main extends Application {
+    final ScrollBar sc = new ScrollBar();
     private int actionCount;
-    private  int x,y;
+    private int x, y;
     int howMuch;
+    private ArrayList<ArrayList<TextField>> allFields;
     private List<TextField> newActions = new ArrayList<TextField>();
     private TextField ac1, ac2;
     private List<Integer> actionsCounter = new ArrayList<Integer>();
     private ComboBox numActions = new ComboBox();
+    private ArrayList<Case> cases;
+
+    public Main() {
+        allFields = new ArrayList<ArrayList<TextField>>();
+    }
 
     /**
      * @param args the command line arguments
@@ -89,20 +101,30 @@ public class Main extends Application {
 // To see only the grid in the center, comment out the following statement
 // If both setCenter() calls are executed, the anchor pane from the second
 // call replaces the grid from the first call
-        border.setCenter(addAnchorPane(addMyGridPane()));
+        final GridPane gPane = addMyGridPane();
+        final AnchorPane aPane = addAnchorPane(gPane);
+        aPane.getChildren().add(sc);
+        border.setCenter(aPane);
 
         Scene scene = new Scene(border);
-//        attempt at binding width, works in reverse
-//        scene.widthProperty().add(border.widthProperty());
-//        scene.heightProperty().addListener(new ChangeListener<Number>() {
-//            @Override
-//            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
-//                Double width = (Double)number2;
-//                border.setHeight(width);
-//            }
-//        });
+
         stage.setScene(scene);
         stage.setTitle("Layout Sample");
+
+        sc.setLayoutX(scene.getWidth() - sc.getWidth());
+        sc.setMin(0);
+        sc.setOrientation(Orientation.VERTICAL);
+        sc.setPrefHeight(180);
+        sc.setMax(360);
+
+        sc.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observableValue, Number old_val, Number new_val) {
+                gPane.setLayoutY(-new_val.doubleValue());
+            }
+        });
+
+
         stage.show();
     }
 
@@ -141,13 +163,13 @@ public class Main extends Application {
         title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         vbox.getChildren().add(title);
 
-        Hyperlink options[] = new Hyperlink[] {
+        Hyperlink options[] = new Hyperlink[]{
                 new Hyperlink("Sales"),
                 new Hyperlink("Marketing"),
                 new Hyperlink("Distribution"),
                 new Hyperlink("Costs")};
 
-        for (int i=0; i<4; i++) {
+        for (int i = 0; i < 4; i++) {
             // Add offset to left side to indent from title
             VBox.setMargin(options[i], new Insets(0, 0, 0, 8));
             vbox.getChildren().add(options[i]);
@@ -165,11 +187,11 @@ public class Main extends Application {
 
         StackPane stack = new StackPane();
         Rectangle helpIcon = new Rectangle(30.0, 25.0);
-        helpIcon.setFill(new LinearGradient(0,0,0,1, true, CycleMethod.NO_CYCLE,
+        helpIcon.setFill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
                 new Stop[]{
-                        new Stop(0,Color.web("#4977A3")),
+                        new Stop(0, Color.web("#4977A3")),
                         new Stop(0.5, Color.web("#B0C6DA")),
-                        new Stop(1,Color.web("#9CB6CF")),}));
+                        new Stop(1, Color.web("#9CB6CF")),}));
         helpIcon.setStroke(Color.web("#D0E6FA"));
         helpIcon.setArcHeight(3.5);
         helpIcon.setArcWidth(3.5);
@@ -245,8 +267,7 @@ public class Main extends Application {
         grid.setVgap(10);
         grid.setPadding(new Insets(0, 10, 0, 10));
 
-
-        x=y=0;
+        x = y = 0;
 
         TextArea bigText = new TextArea();
         bigText.setPrefRowCount(10);
@@ -257,7 +278,7 @@ public class Main extends Application {
         grid.add(bigText, x, y, 3, 1);
 
 //        populating combo box with number of actions
-        for (int i=1; i<10;i++){
+        for (int i = 1; i < 10; i++) {
             numActions.getItems().add(i);
 
         }
@@ -282,7 +303,7 @@ public class Main extends Application {
 
 
         y++;
-        x=0;
+        x = 0;
 
         TextField actor1Value = new TextField();
         actor1Value.setPromptText("First Actor");
@@ -314,10 +335,10 @@ public class Main extends Application {
         flow.setStyle("-fx-background-color: DAE6F3;");
 
         ImageView pages[] = new ImageView[8];
-        for (int i=0; i<8; i++) {
+        for (int i = 0; i < 8; i++) {
             pages[i] = new ImageView(
                     new Image(Main.class.getResourceAsStream(
-                            "graphics/chart_" +(i+1)+".png")));
+                            "graphics/chart_" + (i + 1) + ".png")));
             flow.getChildren().add(pages[i]);
         }
 
@@ -337,10 +358,10 @@ public class Main extends Application {
         tile.setStyle("-fx-background-color: DAE6F3;");
 
         ImageView pages[] = new ImageView[8];
-        for (int i=0; i<8; i++) {
+        for (int i = 0; i < 8; i++) {
             pages[i] = new ImageView(
                     new Image(Main.class.getResourceAsStream(
-                            "graphics/chart_" +(i+1)+".png")));
+                            "graphics/chart_" + (i + 1) + ".png")));
             tile.getChildren().add(pages[i]);
         }
 
@@ -353,55 +374,50 @@ public class Main extends Application {
      * @param grid Grid to anchor to the top of the anchor pane
      */
     private AnchorPane addAnchorPane(final GridPane grid) {
-        numActions.setValue((int)1);
+        numActions.setValue((int) 1);
         AnchorPane anchorpane = new AnchorPane();
 
         Button buttonAdd = new Button("Add");
         Button buttonPrint = new Button("Print");
-
+        //todo extract action, actors values from fields
+        // create actor1, action .... , actor2
         buttonAdd.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
+                ArrayList<TextField> tempList = new ArrayList<TextField>();
+                howMuch = Integer.parseInt(numActions.getValue().toString());
+
                 ++y;
-                x=0;
+                x = 0;
                 ac1 = new TextField();
                 ac1.setPromptText("Actor1");
                 ac2 = new TextField();
                 ac2.setPromptText("Actor2");
 
+                tempList.add(ac1);
+                tempList.add(ac2);
+
                 grid.add(ac1, x++, y);
 
-
-                howMuch = Integer.parseInt(numActions.getValue().toString());
                 TextField act;
                 for (int i = 0; i < howMuch; i++) {
                     act = new TextField();
                     act.setPromptText("Action");
+                    tempList.add(act);
                     grid.add(act, x++, y);
-                    newActions.add(act);
+//                    newActions.add(act);
                 }
-                actionsCounter.add(howMuch);
+//                actionsCounter.add(howMuch);
                 grid.add(ac2, x++, y);
+                allFields.add(tempList);
 
             }
         });
         buttonPrint.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                for(Node n: grid.getChildren()){
+                createUseCaseDiagram();
 
-                    if(n instanceof TextField){
-                        TextField tx = (TextField)n;
-//                        tx.
-                        System.out.println("******");
-                        System.out.println(tx.getPromptText());
-
-                        System.out.println("******");
-
-                    }
-                   System.out.println(n.getProperties());
-                    System.out.println("--------------------------------");
-                }
             }
         });
 
@@ -410,7 +426,7 @@ public class Main extends Application {
         hb.setSpacing(10);
         hb.getChildren().addAll(buttonAdd, buttonPrint);
 
-        anchorpane.getChildren().addAll(grid,hb);
+        anchorpane.getChildren().addAll(grid, hb);
         // Anchor buttons to bottom right, anchor grid to top
         AnchorPane.setBottomAnchor(hb, 8.0);
         AnchorPane.setRightAnchor(hb, 5.0);
@@ -418,7 +434,68 @@ public class Main extends Application {
 
         return anchorpane;
     }
-    private void addActionBox(){
+
+    private void createUseCaseDiagram() {
+     cases = new ArrayList<Case>();
+     int prefix = 0;
+     TextField ac1, ac2;
+     Actor a1, a2;
+     ArrayList<Action> actions = new ArrayList<Action>();
+
+        // pomini go sekoj red na TextFields
+        for (ArrayList<TextField> iterList : allFields) {
+            prefix++;
+            ac1 = iterList.get(0);
+            ac2 = iterList.get(1);
+
+            prefix = allFields.indexOf(iterList);
+            a1 = new Actor(ac1.getText(), "actor1"+prefix);
+            a2 = new Actor(ac2.getText(), "actor2"+prefix);
+
+
+            String report = ac1.getText() + " : ";
+            for (int i = 2; i < iterList.size(); i++) {
+                Action a = new Action(iterList.get(i).getText(), "action"+prefix+i);
+                actions.add(a);
+//                report += " --> " + iterList.get(i).getText();
+            }
+            Case c = new Case(a1, a2, actions);
+            cases.add(c);
+//            report += ac2.getText();
+//            System.out.println(report);
+        }
+        UseCaseDiagram diagram = new UseCaseDiagram("Prv Fraerski Diagram", cases);
+
+        diagramToImage(diagram.toString());
+
+        System.out.println(diagram);
+    }
+
+    private void diagramToImage(String source) {
+        ByteArrayOutputStream png = new ByteArrayOutputStream();
+        SourceStringReader reader = new SourceStringReader(source);
+        try {
+// Write the first image to "png"
+            String desc = reader.generateImage(png);
+
+// Return a null string if no generation
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println("Error in writing to png");
+        }
+
+        byte[] data = png.toByteArray();
+        ByteArrayInputStream input = new ByteArrayInputStream(data);
+
+        try {
+            BufferedImage image = ImageIO.read(input);
+            ImageIO.write(image, "png", new File("diagram.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addActionBox() {
         HBox hb = new HBox();
         hb.getChildren().add(new Text("Zdravooo"));
 
@@ -426,5 +503,6 @@ public class Main extends Application {
     //TODO create scrollbar
     //todo import plantuml
     //todo import earlier classes for drawing
-    //todo extract action, actors values from fields
+
+
 }
