@@ -3,6 +3,8 @@ package sample;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
@@ -10,6 +12,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -33,6 +36,9 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * Sample application that shows examples of the different layout panes
@@ -44,6 +50,11 @@ import javafx.stage.Stage;
 public class Main extends Application {
     private int actionCount;
     private  int x,y;
+    int howMuch;
+    private List<TextField> newActions = new ArrayList<TextField>();
+    private TextField ac1, ac2;
+    private List<Integer> actionsCounter = new ArrayList<Integer>();
+    private ComboBox numActions = new ComboBox();
 
     /**
      * @param args the command line arguments
@@ -245,6 +256,15 @@ public class Main extends Application {
         GridPane.setHalignment(bigText, HPos.CENTER);
         grid.add(bigText, x, y, 3, 1);
 
+//        populating combo box with number of actions
+        for (int i=1; i<10;i++){
+            numActions.getItems().add(i);
+
+        }
+
+        y++;
+        grid.add(numActions, x, y, 2, 1);
+
         y++;
         // Category in column 1, row 1
         Text actor1 = new Text("Actor 1");
@@ -265,12 +285,16 @@ public class Main extends Application {
         x=0;
 
         TextField actor1Value = new TextField();
+        actor1Value.setPromptText("First Actor");
         grid.add(actor1Value, x++, y);
 
+
         TextField actionValue = new TextField();
+        actionValue.setPromptText("Action");
         grid.add(actionValue, x++, y);
 
         TextField actor2Value = new TextField();
+        actor2Value.setPromptText("Second Actor");
         grid.add(actor2Value, x++, y);
 
 //        grid.setGridLinesVisible(true);
@@ -329,25 +353,62 @@ public class Main extends Application {
      * @param grid Grid to anchor to the top of the anchor pane
      */
     private AnchorPane addAnchorPane(final GridPane grid) {
-
+        numActions.setValue((int)1);
         AnchorPane anchorpane = new AnchorPane();
 
-        Button buttonSave = new Button("Save");
-        Button buttonCancel = new Button("Cancel");
+        Button buttonAdd = new Button("Add");
+        Button buttonPrint = new Button("Print");
 
-        buttonSave.setOnAction(new EventHandler<ActionEvent>() {
+        buttonAdd.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-//                grid.getChildren().add(addActionBox(++actionCount));
-                grid.add(new TextField("Zdravo"), 0, ++y);
+                ++y;
+                x=0;
+                ac1 = new TextField();
+                ac1.setPromptText("Actor1");
+                ac2 = new TextField();
+                ac2.setPromptText("Actor2");
 
+                grid.add(ac1, x++, y);
+
+
+                howMuch = Integer.parseInt(numActions.getValue().toString());
+                TextField act;
+                for (int i = 0; i < howMuch; i++) {
+                    act = new TextField();
+                    act.setPromptText("Action");
+                    grid.add(act, x++, y);
+                    newActions.add(act);
+                }
+                actionsCounter.add(howMuch);
+                grid.add(ac2, x++, y);
+
+            }
+        });
+        buttonPrint.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                for(Node n: grid.getChildren()){
+
+                    if(n instanceof TextField){
+                        TextField tx = (TextField)n;
+//                        tx.
+                        System.out.println("******");
+                        System.out.println(tx.getPromptText());
+
+                        System.out.println("******");
+
+                    }
+                   System.out.println(n.getProperties());
+                    System.out.println("--------------------------------");
+                }
             }
         });
 
         HBox hb = new HBox();
         hb.setPadding(new Insets(0, 10, 10, 10));
         hb.setSpacing(10);
-        hb.getChildren().addAll(buttonSave, buttonCancel);
+        hb.getChildren().addAll(buttonAdd, buttonPrint);
 
         anchorpane.getChildren().addAll(grid,hb);
         // Anchor buttons to bottom right, anchor grid to top
@@ -362,4 +423,8 @@ public class Main extends Application {
         hb.getChildren().add(new Text("Zdravooo"));
 
     }
+    //TODO create scrollbar
+    //todo import plantuml
+    //todo import earlier classes for drawing
+    //todo extract action, actors values from fields
 }
