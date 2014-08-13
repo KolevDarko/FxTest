@@ -8,12 +8,19 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.*;
+import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+//import javafx.scene.image.Image;*************************************
+import javafx.scene.control.Button;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.image.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
@@ -33,16 +40,18 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import net.sourceforge.plantuml.SourceStringReader;
+
+import java.awt.*;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 
+
 import javax.imageio.ImageIO;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.awt.image.RenderedImage;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.ResourceBundle;
 
 
 /**
@@ -63,6 +72,7 @@ public class Main extends Application {
     private List<Integer> actionsCounter = new ArrayList<Integer>();
     private ComboBox numActions = new ComboBox();
     private ArrayList<Case> cases;
+    private FlowPane rightPics;
 
     public Main() {
         allFields = new ArrayList<ArrayList<TextField>>();
@@ -103,7 +113,8 @@ public class Main extends Application {
 
 // Choose either a TilePane or FlowPane for right region and comment out the
 // one you aren't using
-        border.setRight(addFlowPane());
+        rightPics = addFlowPane();
+        border.setRight(rightPics);
 //        border.setRight(addTilePane());
 
 // To see only the grid in the center, comment out the following statement
@@ -223,50 +234,7 @@ public class Main extends Application {
     /*
      * Creates a grid for the center region with four columns and three rows
      */
-    private GridPane addGridPane() {
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(0, 10, 0, 10));
-
-        // Category in column 2, row 1
-        Text category = new Text("Sales:");
-        category.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        grid.add(category, 1, 0);
-
-        // Title in column 3, row 1
-        Text chartTitle = new Text("Current Year");
-        chartTitle.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        grid.add(chartTitle, 2, 0);
-
-        // Subtitle in columns 2-3, row 2
-        Text chartSubtitle = new Text("Goods and Services");
-        grid.add(chartSubtitle, 1, 1, 2, 1);
-
-        // House icon in column 1, rows 1-2
-        ImageView imageHouse = new ImageView(
-                new Image(Main.class.getResourceAsStream("graphics/house.png")));
-        grid.add(imageHouse, 0, 0, 1, 2);
-
-        // Left label in column 1 (bottom), row 3
-        Text goodsPercent = new Text("Goods\n80%");
-        GridPane.setValignment(goodsPercent, VPos.BOTTOM);
-        grid.add(goodsPercent, 0, 2);
-
-        // Chart in columns 2-3, row 3
-        ImageView imageChart = new ImageView(
-                new Image(Main.class.getResourceAsStream("graphics/piechart.png")));
-        grid.add(imageChart, 1, 2, 2, 1);
-
-        // Right label in column 4 (top), row 3
-        Text servicesPercent = new Text("Services\n20%");
-        GridPane.setValignment(servicesPercent, VPos.TOP);
-        grid.add(servicesPercent, 3, 2);
-
-//        grid.setGridLinesVisible(true);
-        return grid;
-    }
 
     private GridPane addMyGridPane() {
 
@@ -295,36 +263,9 @@ public class Main extends Application {
         grid.add(numActions, x, y, 2, 1);
 
         y++;
-        // Category in column 1, row 1
-        Text actor1 = new Text("Actor 1");
-        actor1.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        grid.add(actor1, x++, y);
-
-        // Input in 2 column, 1 row
-        Text action = new Text("Action");
-        grid.add(action, x++, y);
-
-        // Title in column 3, row 1
-        Text actor2 = new Text("Actor 2");
-        actor2.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        grid.add(actor2, x++, y);
-
 
         y++;
         x = 0;
-
-        TextField actor1Value = new TextField();
-        actor1Value.setPromptText("First Actor");
-        grid.add(actor1Value, x++, y);
-
-
-        TextField actionValue = new TextField();
-        actionValue.setPromptText("Action");
-        grid.add(actionValue, x++, y);
-
-        TextField actor2Value = new TextField();
-        actor2Value.setPromptText("Second Actor");
-        grid.add(actor2Value, x++, y);
 
 //        grid.setGridLinesVisible(true);
         return grid;
@@ -342,15 +283,40 @@ public class Main extends Application {
         flow.setPrefWrapLength(170); // preferred width allows for two columns
         flow.setStyle("-fx-background-color: DAE6F3;");
 
-        ImageView pages[] = new ImageView[8];
-        for (int i = 0; i < 8; i++) {
-            pages[i] = new ImageView(
-                    new Image(Main.class.getResourceAsStream(
-                            "graphics/chart_" + (i + 1) + ".png")));
-            flow.getChildren().add(pages[i]);
-        }
+//        ImageView pages[] = new ImageView[8];
+//        for (int i = 0; i < 8; i++) {
+//            pages[i] = new ImageView(
+//                    new Image(Main.class.getResourceAsStream(
+//                            "graphics/chart_" + (i + 1) + ".png")));
+//            flow.getChildren().add(pages[i]);
+//        }
 
         return flow;
+    }
+
+    private void addImageToFlowPane(FlowPane fPane, String num){
+
+//        InputStream inStream = Main.class.getResourceAsStream("diagrams/diagram"+num+".png");
+//        String path = String.valueOf(inStream);
+//        ImageView img = new ImageView(String.valueOf(inStream));
+
+//        ImageView img = new ImageView("sample/diagrams/diagram" + num + ".png");
+        Image image;
+        try {
+            image = ImageIO.read(new File("src/sample/diagrams/diagram" + num + ".png"));
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ImageIO.write((RenderedImage) image, "png", out);
+            out.flush();
+            ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+
+            ImageView img = new ImageView(new javafx.scene.image.Image(in));
+
+            fPane.getChildren().add(img);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /*
@@ -366,12 +332,12 @@ public class Main extends Application {
         tile.setStyle("-fx-background-color: DAE6F3;");
 
         ImageView pages[] = new ImageView[8];
-        for (int i = 0; i < 8; i++) {
-            pages[i] = new ImageView(
-                    new Image(Main.class.getResourceAsStream(
-                            "graphics/chart_" + (i + 1) + ".png")));
-            tile.getChildren().add(pages[i]);
-        }
+//        for (int i = 0; i < 8; i++) {
+//            pages[i] = new ImageView(
+//                    new Image(Main.class.getResourceAsStream(
+//                            "graphics/chart_" + (i + 1) + ".png")));
+//            tile.getChildren().add(pages[i]);
+//        }
 
         return tile;
     }
@@ -425,7 +391,7 @@ public class Main extends Application {
             @Override
             public void handle(ActionEvent event) {
                 createUseCaseDiagram();
-
+                showImages(allFields.size());
             }
         });
 
@@ -443,43 +409,57 @@ public class Main extends Application {
         return anchorpane;
     }
 
+    private void showImages(int numDiagrams) {
+        for(int i=0;i < numDiagrams; i++)
+        addImageToFlowPane(this.rightPics, Integer.toString(i));
+
+    }
+
     private void createUseCaseDiagram() {
      cases = new ArrayList<Case>();
      int prefix = 0;
      TextField ac1, ac2;
      Actor a1, a2;
-     ArrayList<Action> actions = new ArrayList<Action>();
+     ArrayList<Action> actions;
 
         // pomini go sekoj red na TextFields
-        for (ArrayList<TextField> iterList : allFields) {
+        for (int j = 0; j < allFields.size(); j++) {
+            ArrayList<TextField> iterList = allFields.get(j);
+
+            actions = new ArrayList<Action>();
             prefix++;
             ac1 = iterList.get(0);
             ac2 = iterList.get(1);
 
             prefix = allFields.indexOf(iterList);
-            a1 = new Actor(ac1.getText(), "actor1"+prefix);
-            a2 = new Actor(ac2.getText(), "actor2"+prefix);
+            a1 = new Actor(ac1.getText(), "actor1" + prefix);
+            a2 = new Actor(ac2.getText(), "actor2" + prefix);
 
 
             String report = ac1.getText() + " : ";
             for (int i = 2; i < iterList.size(); i++) {
-                Action a = new Action(iterList.get(i).getText(), "action"+prefix+i);
+                Action a = new Action(iterList.get(i).getText(), "action" + prefix + i);
                 actions.add(a);
 //                report += " --> " + iterList.get(i).getText();
             }
             Case c = new Case(a1, a2, actions);
-            cases.add(c);
+            UseCaseDiagram diagram = new UseCaseDiagram("Diagram number " + j, c);
+            String namePostfix = Integer.toString(j);
+            diagramToImage(diagram.toString(), namePostfix);
+
+
+//            cases.add(c);
 //            report += ac2.getText();
 //            System.out.println(report);
         }
-        UseCaseDiagram diagram = new UseCaseDiagram("Prv Fraerski Diagram", cases);
+//        UseCaseDiagram diagram = new UseCaseDiagram("Prv Fraerski Diagram", cases);
 
-        diagramToImage(diagram.toString());
+        ResourceBundle.clearCache();
 
-        System.out.println(diagram);
+//        System.out.println(diagram);
     }
 
-    private void diagramToImage(String source) {
+    private boolean diagramToImage(String source, String name) {
         ByteArrayOutputStream png = new ByteArrayOutputStream();
         SourceStringReader reader = new SourceStringReader(source);
         try {
@@ -497,10 +477,16 @@ public class Main extends Application {
 
         try {
             BufferedImage image = ImageIO.read(input);
-            ImageIO.write(image, "png", new File("diagram.png"));
+
+            if(ImageIO.write(image, "png", new File("src/sample/diagrams/diagram" + name + ".png"))){
+                return true;
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
+
         }
+        return false;
     }
 
     private void addActionBox() {

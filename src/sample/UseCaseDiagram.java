@@ -19,6 +19,12 @@ public class UseCaseDiagram {
         this.cases = cases;
     }
 
+    public UseCaseDiagram(String title, Case primer){
+        this.title = title;
+        this.cases = new ArrayList<Case>();
+        cases.add(primer);
+    }
+
     @Override
     public String toString(){
         StringBuffer result = new StringBuffer();
