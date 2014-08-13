@@ -1,4 +1,4 @@
-package sample;
+package sample.UseCase;
 
 /**
  * Created by Darko on 8/12/2014.

@@ -1,4 +1,4 @@
-package sample;
+package sample.UseCase;
 
 import java.util.ArrayList;
 import java.util.List;

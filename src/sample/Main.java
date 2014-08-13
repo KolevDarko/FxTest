@@ -1,16 +1,10 @@
 package sample;
 
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.*;
 import javafx.geometry.Insets;
-import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 //import javafx.scene.image.Image;*************************************
@@ -29,7 +23,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
@@ -40,8 +33,12 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import net.sourceforge.plantuml.SourceStringReader;
+import sample.Sequence.ActionFields;
+import sample.UseCase.Action;
+import sample.UseCase.Actor;
+import sample.UseCase.Case;
+import sample.UseCase.UseCaseDiagram;
 
-import java.awt.*;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 
@@ -66,16 +63,23 @@ public class Main extends Application {
     private int actionCount;
     private int x, y;
     int howMuch;
-    private ArrayList<ArrayList<TextField>> allFields;
+    private ArrayList<ArrayList<TextField>> allFieldsUseCase, allFieldsSequence;
     private List<TextField> newActions = new ArrayList<TextField>();
     private TextField ac1, ac2;
     private List<Integer> actionsCounter = new ArrayList<Integer>();
     private ComboBox numActions = new ComboBox();
     private ArrayList<Case> cases;
     private FlowPane rightPics;
+    private GridPane gPane;
+    private AnchorPane aPane;
+    private BorderPane border;
+    private Scene scene;
+    private TextArea bigText;
+    private List<ActionFields> sequenceActions = new ArrayList<ActionFields>();
 
     public Main() {
-        allFields = new ArrayList<ArrayList<TextField>>();
+        allFieldsUseCase = new ArrayList<ArrayList<TextField>>();
+        allFieldsSequence = new ArrayList<ArrayList<TextField>>();
     }
 
     /**
@@ -86,11 +90,11 @@ public class Main extends Application {
     }
 
     @Override
-    public void start(Stage stage) {
+    public void start(final Stage stage) {
 
 
 // Use a border pane as the root for scene
-        BorderPane border = new BorderPane();
+        border = new BorderPane();
 
         HBox hbox = addHBox();
         MenuBar menuBar = new MenuBar();
@@ -101,49 +105,130 @@ public class Main extends Application {
         menuDiagram.getItems().addAll(useCase, activity, sequence);
 
         menuBar.getMenus().add(menuDiagram);
-
         border.setTop(menuBar);
-
-// Add a stack to the HBox in the top region
-        addStackPane(hbox);
-
-// To see only the grid in the center, uncomment the following statement
-// comment out the setCenter() call farther down
-//        border.setCenter(addGridPane());
-
-// Choose either a TilePane or FlowPane for right region and comment out the
-// one you aren't using
         rightPics = addFlowPane();
         border.setRight(rightPics);
-//        border.setRight(addTilePane());
 
-// To see only the grid in the center, comment out the following statement
-// If both setCenter() calls are executed, the anchor pane from the second
-// call replaces the grid from the first call
-        final GridPane gPane = addMyGridPane();
-        final AnchorPane aPane = addAnchorPane(gPane);
-        aPane.getChildren().add(sc);
+        useCase.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                allFieldsUseCase = new ArrayList<ArrayList<TextField>>();
+                gPane = addMyGridPaneUseCase();
+                aPane = addAnchorPaneUseCase(gPane);
+                refreshView(stage);
+            }
+        });
+
+        sequence.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                allFieldsSequence = new ArrayList<ArrayList<TextField>>();
+                gPane = addMyGridPaneSequence();
+                aPane = addAnchorPaneSequence(gPane);
+                refreshView(stage);
+            }
+        });
+
         border.setCenter(aPane);
 
-        Scene scene = new Scene(border);
+        scene = new Scene(border);
 
         stage.setScene(scene);
-        stage.setTitle("Layout Sample");
+        stage.setTitle("Text to UML");
 
-        sc.setLayoutX(scene.getWidth() - sc.getWidth());
-        sc.setMin(0);
-        sc.setOrientation(Orientation.VERTICAL);
-        sc.setPrefHeight(180);
-        sc.setMax(360);
+        stage.show();
+    }
 
-        sc.valueProperty().addListener(new ChangeListener<Number>() {
+
+    private AnchorPane addAnchorPaneSequence(final GridPane grid) {
+        numActions.setValue((int) 1);
+        AnchorPane anchorpane = new AnchorPane();
+
+        Button buttonAddActors = new Button("Add Actors");
+        Button buttonAddAction = new Button("Add Action");
+        Button buttonPrint = new Button("Print");
+        buttonAddActors.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void changed(ObservableValue<? extends Number> observableValue, Number old_val, Number new_val) {
-                gPane.setLayoutY(-new_val.doubleValue());
+            public void handle(ActionEvent actionEvent) {
+                ArrayList<TextField> tempList = new ArrayList<TextField>();
+                howMuch = Integer.parseInt(numActions.getValue().toString());
+
+                ++y;
+                x = 0;
+
+                TextField actor;
+                for (int i = 0; i < howMuch; i++) {
+                    actor = new TextField();
+                    actor.setPromptText("Actor Name");
+                    tempList.add(actor);
+                    grid.add(actor, x, y);
+                    x+=2;
+                }
+                allFieldsSequence.add(tempList);
+
+            }
+        });
+
+        buttonAddAction.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                ArrayList<TextField> tempList = tempList = allFieldsSequence.get(0);
+
+                ComboBox actionType,left,right;
+                left = new ComboBox();
+                right = new ComboBox();
+                actionType = new ComboBox();
+
+                for (TextField actor: tempList) {
+                    left.getItems().add(actor.getText());
+                    right.getItems().add(actor.getText());
+                }
+                actionType.getItems().add("->");
+                actionType.getItems().add("-->");
+                actionType.getItems().add("->>");
+
+                TextField actionText = new TextField();
+                x=0;
+                y++;
+                grid.add(left, x++, y);
+                grid.add(actionType, x++, y);
+                grid.add(actionText, x++, y);
+                grid.add(right, x++, y);
+
+                sequenceActions.add(new ActionFields(actionText, left, right, actionType));
+
+
             }
         });
 
 
+
+        buttonPrint.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+//                createUseCaseDiagram();
+//                showImages(allFieldsUseCase.size());
+            }
+        });
+
+        HBox hb = new HBox();
+        hb.setPadding(new Insets(0, 10, 10, 10));
+        hb.setSpacing(10);
+        hb.getChildren().addAll(buttonAddActors, buttonAddAction, buttonPrint);
+
+        anchorpane.getChildren().addAll(grid, hb);
+        // Anchor buttons to bottom right, anchor grid to top
+        AnchorPane.setBottomAnchor(hb, 8.0);
+        AnchorPane.setRightAnchor(hb, 5.0);
+        AnchorPane.setTopAnchor(grid, 10.0);
+
+        return anchorpane;
+    }
+
+
+    private void refreshView(Stage stage){
+
+        border.setCenter(aPane);
         stage.show();
     }
 
@@ -167,34 +252,6 @@ public class Main extends Application {
         hbox.getChildren().addAll(buttonCurrent, buttonProjected);
 
         return hbox;
-    }
-
-    /*
-     * Creates a VBox with a list of links for the left region
-     */
-    private VBox addVBox() {
-
-        VBox vbox = new VBox();
-        vbox.setPadding(new Insets(10)); // Set all sides to 10
-        vbox.setSpacing(8);              // Gap between nodes
-
-        Text title = new Text("Data");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        vbox.getChildren().add(title);
-
-        Hyperlink options[] = new Hyperlink[]{
-                new Hyperlink("Sales"),
-                new Hyperlink("Marketing"),
-                new Hyperlink("Distribution"),
-                new Hyperlink("Costs")};
-
-        for (int i = 0; i < 4; i++) {
-            // Add offset to left side to indent from title
-            VBox.setMargin(options[i], new Insets(0, 0, 0, 8));
-            vbox.getChildren().add(options[i]);
-        }
-
-        return vbox;
     }
 
     /*
@@ -236,7 +293,7 @@ public class Main extends Application {
      */
 
 
-    private GridPane addMyGridPane() {
+    private GridPane addMyGridPaneUseCase() {
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -263,12 +320,42 @@ public class Main extends Application {
         grid.add(numActions, x, y, 2, 1);
 
         y++;
+        x = 0;
 
+//        grid.setGridLinesVisible(true);
+        return grid;
+    }
+
+    private GridPane addMyGridPaneSequence() {
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(0, 10, 0, 10));
+
+        x = y = 0;
+
+        bigText = new TextArea();
+        bigText.setPrefRowCount(10);
+        bigText.setPrefColumnCount(200);
+        bigText.setWrapText(false);
+        bigText.setPrefWidth(300);
+        GridPane.setHalignment(bigText, HPos.CENTER);
+        grid.add(bigText, x, y, 3, 1);
+
+//        populating combo box with number of actions
+        for (int i = 1; i < 10; i++) {
+            numActions.getItems().add(i);
+
+        }
+
+        y++;
+        grid.add(numActions, x, y, 2, 1);
         y++;
         x = 0;
 
 //        grid.setGridLinesVisible(true);
         return grid;
+
     }
 
     /*
@@ -283,24 +370,10 @@ public class Main extends Application {
         flow.setPrefWrapLength(170); // preferred width allows for two columns
         flow.setStyle("-fx-background-color: DAE6F3;");
 
-//        ImageView pages[] = new ImageView[8];
-//        for (int i = 0; i < 8; i++) {
-//            pages[i] = new ImageView(
-//                    new Image(Main.class.getResourceAsStream(
-//                            "graphics/chart_" + (i + 1) + ".png")));
-//            flow.getChildren().add(pages[i]);
-//        }
-
         return flow;
     }
 
     private void addImageToFlowPane(FlowPane fPane, String num){
-
-//        InputStream inStream = Main.class.getResourceAsStream("diagrams/diagram"+num+".png");
-//        String path = String.valueOf(inStream);
-//        ImageView img = new ImageView(String.valueOf(inStream));
-
-//        ImageView img = new ImageView("sample/diagrams/diagram" + num + ".png");
         Image image;
         try {
             image = ImageIO.read(new File("src/sample/diagrams/diagram" + num + ".png"));
@@ -347,7 +420,7 @@ public class Main extends Application {
      *
      * @param grid Grid to anchor to the top of the anchor pane
      */
-    private AnchorPane addAnchorPane(final GridPane grid) {
+    private AnchorPane addAnchorPaneUseCase(final GridPane grid) {
         numActions.setValue((int) 1);
         AnchorPane anchorpane = new AnchorPane();
 
@@ -383,7 +456,7 @@ public class Main extends Application {
                 }
 //                actionsCounter.add(howMuch);
                 grid.add(ac2, x++, y);
-                allFields.add(tempList);
+                allFieldsUseCase.add(tempList);
 
             }
         });
@@ -391,7 +464,7 @@ public class Main extends Application {
             @Override
             public void handle(ActionEvent event) {
                 createUseCaseDiagram();
-                showImages(allFields.size());
+                showImages(allFieldsUseCase.size());
             }
         });
 
@@ -423,15 +496,15 @@ public class Main extends Application {
      ArrayList<Action> actions;
 
         // pomini go sekoj red na TextFields
-        for (int j = 0; j < allFields.size(); j++) {
-            ArrayList<TextField> iterList = allFields.get(j);
+        for (int j = 0; j < allFieldsUseCase.size(); j++) {
+            ArrayList<TextField> iterList = allFieldsUseCase.get(j);
 
             actions = new ArrayList<Action>();
             prefix++;
             ac1 = iterList.get(0);
             ac2 = iterList.get(1);
 
-            prefix = allFields.indexOf(iterList);
+            prefix = allFieldsUseCase.indexOf(iterList);
             a1 = new Actor(ac1.getText(), "actor1" + prefix);
             a2 = new Actor(ac2.getText(), "actor2" + prefix);
 
