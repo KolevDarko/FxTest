@@ -1,9 +1,10 @@
 package sample;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.*;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -15,25 +16,12 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.*;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.TilePane;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.CycleMethod;
-import javafx.scene.paint.LinearGradient;
-import javafx.scene.paint.Stop;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import net.sourceforge.plantuml.SourceStringReader;
 import sample.Sequence.ActionFields;
+import sample.Sequence.SequenceDiagram;
 import sample.UseCase.Action;
 import sample.UseCase.Actor;
 import sample.UseCase.Case;
@@ -59,11 +47,11 @@ import java.util.ResourceBundle;
 
 
 public class Main extends Application {
-    final ScrollBar sc = new ScrollBar();
-    private int actionCount;
+    private int sequenceDiagramsCount;
     private int x, y;
     int howMuch;
-    private ArrayList<ArrayList<TextField>> allFieldsUseCase, allFieldsSequence;
+    private ArrayList<ArrayList<TextField>> allFieldsUseCase;
+    private ArrayList<TextField> allActorsSequence;
     private List<TextField> newActions = new ArrayList<TextField>();
     private TextField ac1, ac2;
     private List<Integer> actionsCounter = new ArrayList<Integer>();
@@ -75,11 +63,19 @@ public class Main extends Application {
     private BorderPane border;
     private Scene scene;
     private TextArea bigText;
-    private List<ActionFields> sequenceActions = new ArrayList<ActionFields>();
+    private List<ActionFields> sequenceActionsFields = new ArrayList<ActionFields>();
+    private DatabaseOperations db;
+    private GridPane grid;
+    private ArrayList<Label> nounsLabels;
+    private ArrayList<Label> verbsLabels;
+    private TextField toCopyInto;
+    private ArrayList<Label> allLabels;
+    private GridPane gridLabels;
 
     public Main() {
         allFieldsUseCase = new ArrayList<ArrayList<TextField>>();
-        allFieldsSequence = new ArrayList<ArrayList<TextField>>();
+        allActorsSequence = new ArrayList<TextField>();
+        sequenceDiagramsCount = 0;
     }
 
     /**
@@ -113,8 +109,7 @@ public class Main extends Application {
             @Override
             public void handle(ActionEvent actionEvent) {
                 allFieldsUseCase = new ArrayList<ArrayList<TextField>>();
-                gPane = addMyGridPaneUseCase();
-                aPane = addAnchorPaneUseCase(gPane);
+                aPane = addAnchorPane(createBottomButtonsUseCase());
                 refreshView(stage);
             }
         });
@@ -122,9 +117,8 @@ public class Main extends Application {
         sequence.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                allFieldsSequence = new ArrayList<ArrayList<TextField>>();
-                gPane = addMyGridPaneSequence();
-                aPane = addAnchorPaneSequence(gPane);
+                allActorsSequence = new ArrayList<TextField>();
+                aPane = addAnchorPane(createBottomButtonsSequence());
                 refreshView(stage);
             }
         });
@@ -132,97 +126,26 @@ public class Main extends Application {
         border.setCenter(aPane);
 
         scene = new Scene(border);
-
+        border.setPrefWidth(600);
+        border.setPrefHeight(400);
         stage.setScene(scene);
         stage.setTitle("Text to UML");
 
         stage.show();
+        db = new DatabaseOperations("words.db");
     }
 
 
-    private AnchorPane addAnchorPaneSequence(final GridPane grid) {
-        numActions.setValue((int) 1);
-        AnchorPane anchorpane = new AnchorPane();
+    private void createSequenceDiagram() {
+        SequenceDiagram sequenceDiagram = new SequenceDiagram();
 
-        Button buttonAddActors = new Button("Add Actors");
-        Button buttonAddAction = new Button("Add Action");
-        Button buttonPrint = new Button("Print");
-        buttonAddActors.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                ArrayList<TextField> tempList = new ArrayList<TextField>();
-                howMuch = Integer.parseInt(numActions.getValue().toString());
+        sequenceDiagram.setActors(allActorsSequence);
+        sequenceDiagram.setSequences(sequenceActionsFields);
 
-                ++y;
-                x = 0;
+        diagramToImage(sequenceDiagram.toString(), "sequence");
 
-                TextField actor;
-                for (int i = 0; i < howMuch; i++) {
-                    actor = new TextField();
-                    actor.setPromptText("Actor Name");
-                    tempList.add(actor);
-                    grid.add(actor, x, y);
-                    x+=2;
-                }
-                allFieldsSequence.add(tempList);
+    ResourceBundle.clearCache();
 
-            }
-        });
-
-        buttonAddAction.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                ArrayList<TextField> tempList = tempList = allFieldsSequence.get(0);
-
-                ComboBox actionType,left,right;
-                left = new ComboBox();
-                right = new ComboBox();
-                actionType = new ComboBox();
-
-                for (TextField actor: tempList) {
-                    left.getItems().add(actor.getText());
-                    right.getItems().add(actor.getText());
-                }
-                actionType.getItems().add("->");
-                actionType.getItems().add("-->");
-                actionType.getItems().add("->>");
-
-                TextField actionText = new TextField();
-                x=0;
-                y++;
-                grid.add(left, x++, y);
-                grid.add(actionType, x++, y);
-                grid.add(actionText, x++, y);
-                grid.add(right, x++, y);
-
-                sequenceActions.add(new ActionFields(actionText, left, right, actionType));
-
-
-            }
-        });
-
-
-
-        buttonPrint.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-//                createUseCaseDiagram();
-//                showImages(allFieldsUseCase.size());
-            }
-        });
-
-        HBox hb = new HBox();
-        hb.setPadding(new Insets(0, 10, 10, 10));
-        hb.setSpacing(10);
-        hb.getChildren().addAll(buttonAddActors, buttonAddAction, buttonPrint);
-
-        anchorpane.getChildren().addAll(grid, hb);
-        // Anchor buttons to bottom right, anchor grid to top
-        AnchorPane.setBottomAnchor(hb, 8.0);
-        AnchorPane.setRightAnchor(hb, 5.0);
-        AnchorPane.setTopAnchor(grid, 10.0);
-
-        return anchorpane;
     }
 
 
@@ -254,109 +177,8 @@ public class Main extends Application {
         return hbox;
     }
 
-    /*
-     * Uses a stack pane to create a help icon and adds it to the right side of an HBox
-     *
-     * @param hb HBox to add the stack to
-     */
-    private void addStackPane(HBox hb) {
-
-        StackPane stack = new StackPane();
-        Rectangle helpIcon = new Rectangle(30.0, 25.0);
-        helpIcon.setFill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
-                new Stop[]{
-                        new Stop(0, Color.web("#4977A3")),
-                        new Stop(0.5, Color.web("#B0C6DA")),
-                        new Stop(1, Color.web("#9CB6CF")),}));
-        helpIcon.setStroke(Color.web("#D0E6FA"));
-        helpIcon.setArcHeight(3.5);
-        helpIcon.setArcWidth(3.5);
-
-        Text helpText = new Text("?");
-        helpText.setFont(Font.font("Verdana", FontWeight.BOLD, 18));
-        helpText.setFill(Color.WHITE);
-        helpText.setStroke(Color.web("#7080A0"));
-
-        stack.getChildren().addAll(helpIcon, helpText);
-        stack.setAlignment(Pos.CENTER_RIGHT);
-        // Add offset to right for question mark to compensate for RIGHT
-        // alignment of all nodes
-        StackPane.setMargin(helpText, new Insets(0, 10, 0, 0));
-
-        hb.getChildren().add(stack);
-        HBox.setHgrow(stack, Priority.ALWAYS);
-
-    }
-
-    /*
-     * Creates a grid for the center region with four columns and three rows
-     */
 
 
-    private GridPane addMyGridPaneUseCase() {
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(0, 10, 0, 10));
-
-        x = y = 0;
-
-        TextArea bigText = new TextArea();
-        bigText.setPrefRowCount(10);
-        bigText.setPrefColumnCount(200);
-        bigText.setWrapText(false);
-        bigText.setPrefWidth(300);
-        GridPane.setHalignment(bigText, HPos.CENTER);
-        grid.add(bigText, x, y, 3, 1);
-
-//        populating combo box with number of actions
-        for (int i = 1; i < 10; i++) {
-            numActions.getItems().add(i);
-
-        }
-
-        y++;
-        grid.add(numActions, x, y, 2, 1);
-
-        y++;
-        x = 0;
-
-//        grid.setGridLinesVisible(true);
-        return grid;
-    }
-
-    private GridPane addMyGridPaneSequence() {
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(0, 10, 0, 10));
-
-        x = y = 0;
-
-        bigText = new TextArea();
-        bigText.setPrefRowCount(10);
-        bigText.setPrefColumnCount(200);
-        bigText.setWrapText(false);
-        bigText.setPrefWidth(300);
-        GridPane.setHalignment(bigText, HPos.CENTER);
-        grid.add(bigText, x, y, 3, 1);
-
-//        populating combo box with number of actions
-        for (int i = 1; i < 10; i++) {
-            numActions.getItems().add(i);
-
-        }
-
-        y++;
-        grid.add(numActions, x, y, 2, 1);
-        y++;
-        x = 0;
-
-//        grid.setGridLinesVisible(true);
-        return grid;
-
-    }
 
     /*
      * Creates a horizontal flow pane with eight icons in four rows
@@ -373,10 +195,10 @@ public class Main extends Application {
         return flow;
     }
 
-    private void addImageToFlowPane(FlowPane fPane, String num){
+    private void addImageToFlowPane(FlowPane fPane, String name){
         Image image;
         try {
-            image = ImageIO.read(new File("src/sample/diagrams/diagram" + num + ".png"));
+            image = ImageIO.read(new File("src/sample/diagrams/" + name + ".png"));
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ImageIO.write((RenderedImage) image, "png", out);
             out.flush();
@@ -393,41 +215,152 @@ public class Main extends Application {
     }
 
     /*
-     * Creates a horizontal (default) tile pane with eight icons in four rows
-     */
-    private TilePane addTilePane() {
-
-        TilePane tile = new TilePane();
-        tile.setPadding(new Insets(5, 0, 5, 0));
-        tile.setVgap(4);
-        tile.setHgap(4);
-        tile.setPrefColumns(2);
-        tile.setStyle("-fx-background-color: DAE6F3;");
-
-        ImageView pages[] = new ImageView[8];
-//        for (int i = 0; i < 8; i++) {
-//            pages[i] = new ImageView(
-//                    new Image(Main.class.getResourceAsStream(
-//                            "graphics/chart_" + (i + 1) + ".png")));
-//            tile.getChildren().add(pages[i]);
-//        }
-
-        return tile;
-    }
-
-    /*
      * Creates an anchor pane using the provided grid and an HBox with buttons
      *
      * @param grid Grid to anchor to the top of the anchor pane
      */
-    private AnchorPane addAnchorPaneUseCase(final GridPane grid) {
-        numActions.setValue((int) 1);
-        AnchorPane anchorpane = new AnchorPane();
+    private AnchorPane addAnchorPane(HBox hb) {
+        final AnchorPane anchorpane = new AnchorPane();
+        grid = new GridPane();
 
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(0, 10, 0, 10));
+
+        x = y = 0;
+
+        for (int i = 1; i < 10; i++) {
+            numActions.getItems().add(i);
+        }
+        numActions.setValue((int) 1);
+
+        y++;
+        grid.add(numActions, x, y, 2, 1);
+
+        y++;
+        x = 0;
+
+        bigText = new TextArea();
+        bigText.setPrefRowCount(10);
+        bigText.setPrefColumnCount(200);
+        bigText.setWrapText(true);
+        bigText.setPrefWidth(300);
+
+        Button parseText = new Button("Parse text");
+        Button editText = new Button("Edit text");
+        gridLabels = new GridPane();
+
+        editText.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                bigText.setVisible(true);
+                gridLabels.setVisible(false);
+            }
+        });
+
+        parseText.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                gridLabels.setHgap(5.0);
+                gridLabels.setVgap(5.0);
+                nounsLabels = new ArrayList<Label>();
+                verbsLabels = new ArrayList<Label>();
+                allLabels = new ArrayList<Label>();
+                gridLabels = new GridPane();
+                Label wordLabel;
+                int x,y;
+
+                x=y=0;
+                String[] words = splitTextIntoWords(bigText.getText());
+                for(String word: words){
+                    wordLabel = new Label(word);
+                    allLabels.add(wordLabel);
+                    if(db.searchNoun(word.toLowerCase())){
+                        nounsLabels.add(wordLabel);
+                    }
+                    if(db.searchVerb(word.toLowerCase())){
+                        verbsLabels.add(wordLabel);
+                    }
+                    gridLabels.add(wordLabel, y++, x);
+                    if(y == 7) {
+                        y = 0;
+                        x++;
+                    }
+                }
+                gridLabels.setGridLinesVisible(true);
+                anchorpane.getChildren().add(gridLabels);
+                AnchorPane.setTopAnchor(gridLabels, 5.0);
+                bigText.setVisible(false);
+                assignEventsToLabels();
+            }
+        });
+
+        anchorpane.getChildren().addAll(grid, hb, bigText, parseText, editText);
+        // Anchor buttons to bottom right, anchor grid to top
+        AnchorPane.setBottomAnchor(hb, 8.0);
+        AnchorPane.setRightAnchor(hb, 10.0);
+        AnchorPane.setTopAnchor(grid, 220.0);
+        AnchorPane.setTopAnchor(bigText, 5.0);
+        AnchorPane.setTopAnchor(parseText, 200.0);
+        AnchorPane.setTopAnchor(editText, 200.0);
+        AnchorPane.setRightAnchor(parseText, 10.0);
+        AnchorPane.setRightAnchor(editText, 50.0);
+
+
+        return anchorpane;
+    }
+
+    private void assignEventsToLabels() {
+        for(final Label lbl: allLabels){
+               lbl.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                   @Override
+                   public void handle(MouseEvent event) {
+                       if(toCopyInto != null) {
+                           toCopyInto.setText(toCopyInto.getText() + " " + lbl.getText());
+                       }
+                   }
+               });
+           }
+    }
+
+    public void highlightVerbs(){
+        for(Label lbl: verbsLabels){
+            lbl.setStyle("-fx-background-color: forestgreen;");
+        }
+    }
+    public void unHighlightVerbs(){
+        for(Label lbl: verbsLabels){
+            lbl.setStyle("");
+        }
+    }
+
+    public void highlightNouns(){
+        for(Label lbl: nounsLabels){
+            lbl.setStyle("-fx-background-color: mediumpurple;");
+        }
+    }
+
+    public void unHighlightNouns(){
+        for(Label lbl: nounsLabels){
+            lbl.setStyle("");
+        }
+    }
+
+    public String[] splitTextIntoWords(String text) {
+        String forbidden = ".,!?:;";
+        String[] results = text.split(" ");
+        for (int i = 0; i < results.length; i++) {
+            String lastOne = String.valueOf(results[i].charAt(results[i].length()-1));
+            if(forbidden.contains(lastOne.substring(0))){
+                results[i] = results[i].substring(0,results[i].length()-1);
+            }
+        }
+        return results;
+    }
+
+    private HBox createBottomButtonsUseCase(){
         Button buttonAdd = new Button("Add");
         Button buttonPrint = new Button("Print");
-        //todo extract action, actors values from fields
-        // create actor1, action .... , actor2
         buttonAdd.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
@@ -441,15 +374,55 @@ public class Main extends Application {
                 ac2 = new TextField();
                 ac2.setPromptText("Actor2");
 
+
+                ac1.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                        if(newValue){
+                            toCopyInto = ac1;
+                            highlightNouns();
+                        }else{
+                            toCopyInto = null;
+                            unHighlightNouns();
+                        }
+                    }
+                });
+                ac2.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                        if(newValue){
+                            toCopyInto = ac2;
+                            highlightNouns();
+                        }else{
+                            toCopyInto = null;
+                            unHighlightNouns();
+                        }
+                    }
+                });
+
                 tempList.add(ac1);
                 tempList.add(ac2);
 
                 grid.add(ac1, x++, y);
 
                 TextField act;
+
                 for (int i = 0; i < howMuch; i++) {
                     act = new TextField();
                     act.setPromptText("Action");
+                    final TextField finalAct = act;
+                    act.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                        @Override
+                        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                            if(newValue){
+                                toCopyInto = finalAct;
+                                highlightVerbs();
+                            }else{
+                                toCopyInto = null;
+                                unHighlightVerbs();
+                            }
+                        }
+                    });
                     tempList.add(act);
                     grid.add(act, x++, y);
 //                    newActions.add(act);
@@ -464,27 +437,129 @@ public class Main extends Application {
             @Override
             public void handle(ActionEvent event) {
                 createUseCaseDiagram();
-                showImages(allFieldsUseCase.size());
+                showImages(allFieldsUseCase.size(), "diagram");
+            }
+        });
+        HBox hb = new HBox();
+
+        hb.setPadding(new Insets(0, 10, 10, 10));
+        hb.setSpacing(10);
+        hb.getChildren().addAll(buttonAdd, buttonPrint);
+        return hb;
+    }
+
+    private HBox createBottomButtonsSequence(){
+        Button buttonAddActors = new Button("Add Actors");
+        Button buttonAddAction = new Button("Add Action");
+        Button buttonPrint = new Button("Print");
+        buttonAddActors.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                howMuch = Integer.parseInt(numActions.getValue().toString());
+
+                ++y;
+                x = 0;
+
+                TextField actor;
+                for (int i = 0; i < howMuch; i++) {
+                    actor = new TextField();
+                    actor.setPromptText("Actor Name");
+                    final TextField finalActor = actor;
+                    actor.setOnMouseReleased(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent event) {
+                            toCopyInto = finalActor;
+                            highlightNouns();
+                        }
+                    });
+                    actor.focusedProperty().addListener(new ChangeListener<Boolean>()
+                    {
+                        @Override
+                        public void changed(ObservableValue<? extends Boolean> arg0, Boolean oldPropertyValue, Boolean newPropertyValue)
+                        {
+                            if (newPropertyValue)
+                            {
+                                toCopyInto = finalActor;
+                                highlightNouns();
+                            }
+                            else
+                            {
+                                toCopyInto = null;
+                                unHighlightNouns();
+                            }
+                        }
+                    });
+                    allActorsSequence.add(actor);
+                    grid.add(actor, x, y);
+                    x+=2;
+                }
+            }
+        });
+
+        buttonAddAction.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                ComboBox actionType,left,right;
+                left = new ComboBox();
+                right = new ComboBox();
+                actionType = new ComboBox();
+
+                for (TextField actor: allActorsSequence) {
+                    left.getItems().add(actor.getText());
+                    right.getItems().add(actor.getText());
+                }
+
+                actionType.getItems().add("->");
+                actionType.getItems().add("-->");
+                actionType.getItems().add("->>");
+
+                final TextField actionText = new TextField();
+                actionText.focusedProperty().addListener(new ChangeListener<Boolean>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                        if(newValue){
+                            toCopyInto = actionText;
+                            highlightVerbs();
+                        }else{
+                            toCopyInto = null;
+                            unHighlightVerbs();
+                        }
+                    }
+                });
+
+                x=0;
+                y++;
+                grid.add(left, x++, y);
+                grid.add(actionType, x++, y);
+                grid.add(actionText, x++, y);
+                grid.add(right, x++, y);
+
+                sequenceActionsFields.add(new ActionFields(actionText, left, right, actionType));
+
+
+            }
+        });
+
+
+
+        buttonPrint.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                createSequenceDiagram();
+                addImageToFlowPane(rightPics, "sequence");
             }
         });
 
         HBox hb = new HBox();
         hb.setPadding(new Insets(0, 10, 10, 10));
         hb.setSpacing(10);
-        hb.getChildren().addAll(buttonAdd, buttonPrint);
-
-        anchorpane.getChildren().addAll(grid, hb);
-        // Anchor buttons to bottom right, anchor grid to top
-        AnchorPane.setBottomAnchor(hb, 8.0);
-        AnchorPane.setRightAnchor(hb, 5.0);
-        AnchorPane.setTopAnchor(grid, 10.0);
-
-        return anchorpane;
+        hb.getChildren().addAll(buttonAddActors, buttonAddAction, buttonPrint);
+        return hb;
     }
 
-    private void showImages(int numDiagrams) {
+    private void showImages(int numDiagrams, String name) {
         for(int i=0;i < numDiagrams; i++)
-        addImageToFlowPane(this.rightPics, Integer.toString(i));
+        addImageToFlowPane(this.rightPics, name + Integer.toString(i));
 
     }
 
@@ -513,22 +588,14 @@ public class Main extends Application {
             for (int i = 2; i < iterList.size(); i++) {
                 Action a = new Action(iterList.get(i).getText(), "action" + prefix + i);
                 actions.add(a);
-//                report += " --> " + iterList.get(i).getText();
             }
             Case c = new Case(a1, a2, actions);
             UseCaseDiagram diagram = new UseCaseDiagram("Diagram number " + j, c);
-            String namePostfix = Integer.toString(j);
+            String namePostfix = "diagram" + Integer.toString(j);
             diagramToImage(diagram.toString(), namePostfix);
-
-
-//            cases.add(c);
-//            report += ac2.getText();
-//            System.out.println(report);
         }
-//        UseCaseDiagram diagram = new UseCaseDiagram("Prv Fraerski Diagram", cases);
 
         ResourceBundle.clearCache();
-
 //        System.out.println(diagram);
     }
 
@@ -551,7 +618,7 @@ public class Main extends Application {
         try {
             BufferedImage image = ImageIO.read(input);
 
-            if(ImageIO.write(image, "png", new File("src/sample/diagrams/diagram" + name + ".png"))){
+            if(ImageIO.write(image, "png", new File("src/sample/diagrams/" + name + ".png"))){
                 return true;
             }
 
@@ -562,14 +629,8 @@ public class Main extends Application {
         return false;
     }
 
-    private void addActionBox() {
-        HBox hb = new HBox();
-        hb.getChildren().add(new Text("Zdravooo"));
-
+    private void setToCopyInto(String text){
+        toCopyInto.setText(text);
     }
-    //TODO create scrollbar
-    //todo import plantuml
-    //todo import earlier classes for drawing
-
 
 }
