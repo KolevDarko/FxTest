@@ -38,8 +38,9 @@ public class IntelligentDiagram {
         return false;
     }
     //todo implement this method for creating sequence diagrams
+    //todo create diagrams by combining all cases for nouns and verbs
 
-    public String extractDataSequence() {
+    public SequenceDiagram extractDataSequence() {
 
         StringBuffer output = new StringBuffer();
         String[] words = splitTextIntoWords(data);
@@ -51,11 +52,9 @@ public class IntelligentDiagram {
         rights = new ArrayList<>();
         actions = new ArrayList<>();
 
-
         SequenceDiagram diagram;
         List<ActionFlow> sequences = new ArrayList<>();
         ActionFlow seq = new ActionFlow();
-//        List<>
         for (String word : words) {
             if(isLastWordOfSentence(word)){
                 lastWord = true;
@@ -66,25 +65,40 @@ public class IntelligentDiagram {
             if (db.searchNoun(word)) {
                 if (hasLeft) {
                     if (hasAction) {
-                        seq.setaLeft(new TextField(word));
+                        rights.add(word);
+                    } else {
+                        lefts.add(word);
                     }
                 } else {
-                    seq = new ActionFlow();
-                    seq.setaRight(new TextField(word));
+                    lefts.add(word);
                     hasLeft = true;
                 }
             }
             if (db.searchVerb(word)) {
-                seq.setActionText(new TextField(word));
+                actions.add(word);
                 hasAction = true;
             }
 
             if (lastWord) {
-                sequences.add(seq);
+                for (String leftActor: lefts){
+                    for(String rightActor: rights){
+                        for(String actionText: actions) {
+                            sequences.add(new ActionFlow(actionText, leftActor, rightActor));
+                        }
+                    }
+                }
+                lefts = new ArrayList<>();
+                rights = new ArrayList<>();
+                actions = new ArrayList<>();
                 hasLeft = hasAction = false;
             }
         }
-        return output.toString();
+
+        diagram = new SequenceDiagram();
+        diagram.setSequences(sequences);
+        output.append(diagram.toString());
+        System.out.println(output.toString());
+        return diagram;
     }
 
     public String extractDataUseCase() {
@@ -101,7 +115,6 @@ public class IntelligentDiagram {
 
 
         UseCaseDiagram diagram;
-//        List<>
         for (String word : words) {
            if(isLastWordOfSentence(word)){
                lastWord = true;

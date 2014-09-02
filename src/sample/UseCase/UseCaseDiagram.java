@@ -12,6 +12,7 @@ public class UseCaseDiagram {
 
     public UseCaseDiagram() {
         cases = new ArrayList<Case>();
+        title = "test title";
     }
 
     public UseCaseDiagram(String title, ArrayList<Case> cases){
@@ -24,6 +25,10 @@ public class UseCaseDiagram {
         this.cases = new ArrayList<Case>();
         cases.add(primer);
     }
+
+   public void addCase(Case temp){
+       cases.add(temp);
+   }
 
     @Override
     public String toString(){

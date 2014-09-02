@@ -14,7 +14,7 @@ public class DatabaseOperations {
         this.dbName = dbname;
 //        createTable();
 //        insertData();
-        searchNoun("пиперка");
+//        searchNoun("пиперка");
     }
 
     private void Connect(){

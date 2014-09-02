@@ -1,5 +1,9 @@
 package sample.UseCase;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.control.CheckBox;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,49 +11,61 @@ import java.util.List;
  * Created by Darko on 8/12/2014.
  */
 public class Case {
-    private Actor left,right;
-    private List<Action> actions;
+    public final Actor leftA,rightA;
+    public List<Action> actionsL;
+    public CheckBox caseBox;
 
 
     public Case(Actor left, Action action) {
-        actions = new ArrayList<Action>();
-        this.left = left;
-        this.right = null;
+        actionsL = new ArrayList<Action>();
+        this.leftA = left;
+        this.rightA = null;
     }
 
-    public Case(Actor left, Actor right, List<Action> actions){
-        this.left = left;
-        this.right = right;
-        this.actions = actions;
+    public Case(String left, String right, final List<String> actions){
+        this.actionsL = new ArrayList<>();
+        this.leftA = new Actor(left);
+        this.rightA = new Actor(right);
+        for(String s: actions){
+            this.actionsL.add(new Action(s));
+        }
+        caseBox = new CheckBox();
+        caseBox.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(newValue){
+                    leftA.actorBox.setSelected(true);
+                    rightA.actorBox.setSelected(true);
+                    for(Action a: actionsL){
+                        a.actionBox.setSelected(true);
+                    }
+                }
+            }
+        });
     }
 
     public void AddAction(Action act){
-        actions.add(act);
+        actionsL.add(act);
     }
 
     @Override
     public String toString(){
-        String rightString = (this.right != null)? this.right.toString() : "";
+        if(!caseBox.isSelected()){
+            return "";
+        }
         StringBuffer output =new StringBuffer();
 
-        output.append(left + rightString);
-        for(Action a: actions){
-            output.append(a);
-        }
-        output.append(left.alias + "->" + actions.get(0).alias + "\n");
+        output.append(leftA + " -> ");
 
-        for (int i = 0; i < actions.size()-1; i++) {
-            output.append(actions.get(i).alias + " -> " + actions.get(i+1).alias + "\n");
+        for(Action a: actionsL){
+            if(a.actionBox.isSelected()) {
+                output.append(a + "\n");
+                output.append(a + " -> ");
+            }
         }
+        output.append(rightA + "\n");
 
-        if(rightString != "") {
-            output.append(actions.get(actions.size() - 1).alias + " -> " + right.alias + "\n");
-        }
-        /*output.append(left.alias + "->" + action.alias  + action.label1 + "\n");
-        if(rightString != "") {
 
-            output.append(action.alias + "->" + right.alias + action.label2 + "\n");
-        }*/
         return output.toString();
     }
 

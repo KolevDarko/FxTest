@@ -1,33 +1,30 @@
 package sample.UseCase;
 
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.TextField;
+
 /**
  * Created by Darko on 8/12/2014.
  */
 public class Actor {
-    public String name;
-    public String stereotype;
-    public String alias;
-    public Actor parent;
 
-    public Actor(String name, String alias, String stereotype) {
-        this.name = name;
-        this.stereotype = stereotype;
-        this.alias = alias;
+    public TextField actorField;
+    public CheckBox actorBox;
+
+
+    public Actor(String name){
+
+        this.actorField = new TextField(name);
+        this.actorBox = new CheckBox();
     }
 
-    public Actor(String name, String alias) {
-        this.name = name;
-        this.alias = alias;
-        this.stereotype = "";
-    }
-
-    public void setParent(Actor parent){
-        this.parent = parent;
-    }
 
     @Override
     public String toString(){
-        return ":"+this.name+":" + " as " + this.alias + "\n";
+        if(actorBox.isSelected()) {
+            return " :" + actorField.getText() + ": ";
+        }
+        return "";
     }
 
 }
